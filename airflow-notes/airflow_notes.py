@@ -33,6 +33,14 @@ Airflow Benefits
 ##################################################
 # DAG / Operator / Task
 ##################################################
+
+# Concepts https://airflow.apache.org/concepts.html#concepts-operators
+
+# DAG: a description of the order in which work should take place
+# Operator: a class that acts as a template for carrying out some work
+# Task: a parameterized instance of an operator
+# Task Instance: a task that 1) has been assigned to a DAG and 2) has a state associated with a specific run of the DAG
+
 '''
 DAG Components
 '''
@@ -136,6 +144,11 @@ Task Arguments
 '''
 Types of Operators
 '''
+
+# An operator describes a single task in a workflow. Operators are usually (but not always) atomic, meaning they can stand on their own and don’t need to share resources with any other operators. 
+# The DAG will make sure that operators run in the correct certain order; other than those dependencies, operators generally run independently. In fact, they may run on two completely different machines.
+
+
 # Sensor
 # a type of operator that will keep running until a certain criteria is met 
 # example: waiting for certain time, external file or source 
@@ -153,6 +166,16 @@ Types of Operators
 # Can extend from Base operators 
 
 
+##################################################
+# Schedules & Triggers 
+##################################################
+
+# https://airflow.apache.org/scheduler.html
+
+# The first DAG Run is created based on the minimum start_date for the tasks in your DAG.
+# Subsequent DAG Runs are created by the scheduler process, based on your DAG’s schedule_interval, sequentially.
+# When clearing a set of tasks’ state in hope of getting them to re-run, it is important to keep in mind the DAG Run’s state too as it defines whether the scheduler should look into triggering tasks for that run.
+
 '''
 Alerts & SLAs
 '''
@@ -165,6 +188,9 @@ DagRuns and TaskInstances
 '''
 # A DagRun is a DAG with a sepcific execution time 
 # TaskInstances are the tasks belonging to DagRuns 
+
+# A task instance represents a specific run of a task and is characterized as the combination of a dag, a task, and a point in time. 
+# Task instances also have an indicative state, which could be “running”, “success”, “failed”, “skipped”, “up for retry”, etc.
 
 
 
