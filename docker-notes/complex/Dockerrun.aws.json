@@ -1,0 +1,11 @@
+{
+    "AWSEBDockerrunVersion": 2,
+    "containerDefinitions": [
+        {
+            "name": "client",
+            "image": "feitianfeiniu/multi-client", 
+            "hostname": "client"
+        }
+    ]
+}
+
