@@ -1,0 +1,38 @@
+Slide Audio
+
+Slide 1
+Hello everyone and welcome to an Terraform - Getting Started.  I’m Ned Bellavance IT Consultant and Microsoft MVP in Cloud and Datacenter Management, and I'll be helping you learn the fundamentals of Terraform.
+
+Slide 2
+In this module we'll be dipping our toes into the vast lake that is Terraform.  By the end of this module you will be familiar with some of the basic syntax and components or Terraform, and you will be ready to deploy your first instance of infrastructure.  Before we dive into the fundamentals of Terraform, I'd like to present you with a real world scenario to help place some of the tasks and information you'll be learning into context.  As an IT admin I'm always eager to see where the rubber meets the road with any new tool, and I suspect you might be the same way.  Finally, I'll walk you through a demonstration of deploying the basic configuration based on the requirements of the scenario.  You can think of this as your Terraform Hello World if you like, but I promise it will be much more useful!
+
+Slide 3
+Automating Infrastructure deployment and maintenance is built on several key concepts, and all of these are enshrined in Terraform's design.  For the purpose of this module we will focus on Provisioning Resources using Terraform.  As we move into the other modules in the course, we will return to these key components and examine the others in more detail.  By the end of this module you will be able to deploy some basic resources, and start to understand how to configure them after instantiation.  
+
+Slide 4
+For our real world scenario, let’s say that you are an IT Ops Admin at Globomantics, a medium size insurance company.  Sally Sue the Developer has requested that you provision a development environment for a new business application as part of a direct to consumer marketing push.  It’s a traditional 2-tier app with a web front end, a database backend and a public DNS record.  Your company has recently start using the public cloud, and you decide to spin the environment up in Amazon Web Services.  You could of course simply log into the Amazon Web Console and set up the environment manually, but you've heard about this new software Terraform, and this seems like an ideal project to take it for a test run.
+
+Slide 5
+Now that you know what you need to deploy and what tool you are going to use to deploy it, let's look at what comprises a Terraform solution.  The Terraform software itself is basically just an executable written and compiled in GoLang, meaning that there are no additional drivers or plugins to install, no dlls, no registry entries.  That also makes the software very portable and simple to install.  All the Terraform commands are run from the command line.  The second component of Terraform is one or more files that make up your desired deployment.  For this first module we will be focusing on using a single file, but in later modules we'll see how you can split a configuration into multiple files for simplicity of use, abstraction of components, and reuse of code.  Aside from those two components are the terraform state file and your Terraform preferences.
+
+
+Slide 6
+Let's think about what you might need to deploy infrastructure to meet your requirements.  You'll be using AWS to host the infrastructure, so you'll need some credentials to login.  In Terraform terminology, AWS is called a Provider and the credentials are some of the values being submitted to the provider.  In AWS you'll be creating a server to host the web and database components.  That is called a resource, and as you can see a resource takes several different arguments that can either be hard coded or passed as a variable.  Finally, you might want to get some information out of your deployment, like the public DNS address of your webserver.  In Terraform, outputs serve that function admirably.  There are some other pieces, such variables, provisioners, and modules.  You'll learn more about those in later modules.  But now, as promised, let's go deploy some infrastructure!
+
+Slide 7
+For demo I am going to walk you through the Terraform file we'll be deploying.  Then we'll jump to the command line and run the deployment, and finally we can review the results of our deployment.  If you'd like to play along you will need an AWS Account and the Demo Files included in the course.  
+
+Slide 8
+Quick Disclaimer, while it is possible to create a free account in AWS and deploy the resources in the configuration file for free, there is the distinct possibility that it may end up costing you some money.  Please be cognizant of that fact, and be sure to tear down your resources when you're not using them.  I'll teach you how in the demonstration.
+
+DEMO Script
+Just wing it for now
+	1. Walk through the components of the Terraform file
+	2. Discuss the AWS default VPC and how we are getting around creating networking
+	3. Mention the provisioner in the instance creation, and allude to a future module
+	4. Switch to the command line and run terraform with version, then plan, then apply
+	5. Copy the output to a browser and show Hello World (as promised)
+	6. Switch back to command line and destroy the config
+
+Slide 9
+In this module you learned some of the fundamental components of a Terraform configuration and how they work together to create a successful deployment.  You saw how a few lines of code turn into infrastructure in the public cloud in a way that is repeatable and consistent.  In the next module we will explore how to update an existing configuration, add resources, and observe how Terraform handles planned changes.  And possibly a guide to global domination, you'll just have to check it out to see!

@@ -193,26 +193,167 @@ Accessing S3 with EC2
 
 
 # RDS
-- scheduled automatic backups
+
+Relational Databases
+
+## Capabilities 
+- scheduled automatic backups (and manual snapshots)
 - update software
 - easy to take DB snapshots and change the hardware
 - multiple AZ
 - RDS run on EC2 instances
     - When creating Database, it created EC2 instance with operating system and database engine 
 - Database read replica (non production copy with eventual consistency)
+- Monitoring (with cloudwatch)
+- Encryption at rest 
 
-Connecting to a database in RDS
-- add rule in security groups
-- use Client to access the database (host, username, password)
+## Concepts 
+Database instances - the environment for setup
+Multiple database engine - mysql, postgres, oracle, etc. 
+Data backup - restored to a point in time 
 
 
-ORM - Object Relational Mapping (Sequalize)
-Converts between database and in app objects 
+## Pricing 
+- DB instance type (upfront)
+- Storage per GB (sometimes IO requests too)
+- Data transfer out 
+- Backup storage 
 
-Update the code to use the ORM
-- data and model parts 
+## Setup 
+
+Creating Instances (Upfront Choices)
+- Type of Instance 
+- How much Storage
+- Type of Storage 
+- Region 
+- Level of resilience 
+- Which database engine
+- Who needs access 
+
+Storage Types 
+- General Purpose SSD 
+    - 5GB - 3 TB in size
+    - pay storage only 
+    - 3 IOPS per GB 
+    - Small to Medium DBs
+- Provisioned IOPS SSD 
+    - 100 GB - 3 TB in size
+    - Set 1000 - 30000 IOPs
+    - Pay storage + IOPS
+- Magnetic Storage 
+    - 5GB - 3TB in size 
+    - 100 IOPS
+    - Pay storage + IOPS
+    - Best Price
+
+Steps
+- Launch DB Instance 
+    - Choose Engine (e.g. MySQL)
+    - Pick DB Instance Class (size) and Options like Multi-AZ, Storage Type, etc. 
+    - Provide instance ID, master username, password 
+- Configure Network & Security 
+    - VPC
+    - Security Group (provide access to specific IP to DB instance)
+- Securing Instances 
+    - IAM Policies applied to RDS server - which actions to perform on what resources 
+        - DB instances
+        - DB read replicas 
+        - DB snapshots
+        etc.
+    - Security Groups 
+        - DB Security Groups vs. VPC Security Groups
+            - EC2 Security Group when DB not in VPC
+            - VPC Security Group when DB in a VPC
+        - Add one to many authorizations
+
+## Connecting to an Instance
+- Use DNS, not IP
+
+- Connect via Client tools 
+    - Access from machine with approved source IP (via Security Group)
+    - add rule in security groups
+    - use Client to access the database (host, username, password)
+    - with connection string 
+    - using a client tool like MySQL workbench 
+
+- Connect in App using ORM - Object Relational Mapping (Sequalize)
+    - Converts between database and in app objects 
+    - data and model parts of the code 
 
 Add the AmazonRDSFullAccess to the ec2-role and allow access to RDS instance from ec2-sg by adding to the RDS instance secruity group 
+
+
+## Importing Data 
+Choose tool/pattern based on 
+- Data size
+- Source / destination engine 
+
+Take snapshots, disable automatic backups before load 
+
+## Lifecycle Activities 
+
+Backup and Restore 
+- Automated Backup
+    - regular backup during backup window
+    - 0 -35 day backup retention period 
+- Restore instance ot any time during retention period 
+    - Default security group (needs to switch to customized one)
+- Instance Action -> Restore to a point in time 
+    - this will create a brand new instance 
+    - copy new endpoint to the app and DB client 
+
+
+Snapshots
+- Manual database backups 
+- Can copy or restore snapshots (across regions will take long)
+
+
+Database Scaling 
+
+Scale Performance
+- Increase storage amount 
+    - Instance Action modify move to bigger instance
+    - Brief moment of outage
+- Change storage type 
+- Change instance class 
+
+
+Scale Availability 
+
+Read Replicas 
+- DB replica for read access 
+- Async replication 
+- MySQL and PostgreSQL 
+- Can make a replica an instance 
+- Scale high traffic instances
+- Source for reports 
+- Highly available read access 
+- Replica size should match source DB 
+- In App
+    - read operations against the read replica host 
+
+Multi-AZ Deployment (high availability)
+- Synchronous standby instance in different AZ
+- Configured at instance create/convert time 
+- Performance degradation (write transaction to multiple locations)
+- Endpoint won't change 
+- Reboot with Failover 
+
+
+## Monitoring & Maintenance 
+
+Database Logs
+- View 
+- Watch (real time update)
+- Download 
+- Query 
+- Retention Periods 
+
+CloudWatch metrics & alerting 
+- Event push notification
+- View events 
+- CloudTrail audit of API requests 
+
 
 
 # DynamoDB
@@ -221,6 +362,7 @@ Add the AmazonRDSFullAccess to the ec2-role and allow access to RDS instance fro
     - unlimited elastic storage
     - no hardware choices
     - pay for what you use 
+    - native redundancy
 
 Pricing
 - provisioned throughput capacity
@@ -243,21 +385,140 @@ Connect to application
 
 
 # Redshift 
+
+## Core Concepts
 - data warehouse
 - Take RDS, Dynamo, and S3 to Redshift 
 - basic structure a cluster (collection of nodes)
+- based on postgres SQL (can use postgres drivers, etc.)
+- MPP 
+- Columnar data storage 
 
-Features
+- Star chemas (denormalized dimension tables)
+- Snowflake schemas 
+
+Fully managed 
+- Built in data replication and backup 
+
+Redshift Architecture
+- Drivers make connection to the Cluster 
+- Cluster has Leader Node and Compute Nodes 
+- Leader node dealt with outside communication and organzie the compute nodes
+- Node has slices (with separate memory, computation etc.)
+
+Columnar Data Storage 
+- Typical each row stored in a separate block 
+- Columnar each data block stores a single column for multiple rows 
+
+
+## Features
 - can set up VPC protection
 - data warehouse encryption
 - no public IP
+- nativ eredundancy 
+- postgres-like engine 
 
-Pricing
+
+## Pricing
 - pay for what you use 
-- dense compute vs. dense storage 
+- node type (dense compute vs. dense storage)
     - dense compute - cheaper, less storage
     - dense storage - more expensive 
+- Backup storage 
 
+## Creating Clusters and Databases 
+Dense Storage Nodes vs. Dense Compute Nodes
+- Storage with a lot of data 
+    xlarge
+    - 1-32 nodes
+    - 2 TB HDD
+- Compute for complex queries 
+    xlarge
+    - 1-32 nodes
+    - 160 GB SSD 
+
+Cluster Considerations
+- Region (depends on Source DB)
+- Node Type 
+- Cluster Size 
+- Parameter Group
+- Security Group
+    - Set of rules identifying IPs that can access the cluster
+- IAM 
+    - API actions 
+    - Allow or Deny 
+    - Resource tied to action 
+    
+Apply Security 
+- Security Group
+    - Authorization for this machine
+    - Add IP range 
+    - Or pick EC2 security group
+- IAM
+    - Policy specifically for Redshift 
+    - Admin or ReadOnly 
+- Encryption
+    - Redshift encrypts all data 
+    
+
+Access Cluster
+- Use connection string via SSL 
+- Check IP Access and SSL certificate
+- Connect Client to cluster 
+
+Download JDBC Driver and Client Tool
+
+
+## Data Loading
+Table Creation
+- Specify column information during table creation
+    - compression type
+    - data distribution style
+    - sort keys 
+
+Best Practices
+- Consider distribution style 
+- Carefully choose sort key 
+- Use COPY and automatic compression 
+- Small column size 
+- Leverage data/time types
+- Define constraints 
+- Use multiple files in COPY
+- Validate data with NOLOAD option 
+- Use manifests during COPY
+- VACCUM and ANALYZE after load
+- Merge using staging tables 
+
+S3
+- COPY command is best 
+- Delimited (encrypted, compressed) flat files 
+
+DynamoDB
+- COPY command 
+- Attribute mapping to column names 
+- Can throttle throughput
+
+RDS -> S3 -> Redshift
+- RDS export to csv
+- Upload csv to S3
+- COPY command in Redshift client (SQL workbench)
+
+Changing Cluster Size
+- Choose to resize cluster (programatically or via console)
+- Cluter put into read only mode
+- New target cluster created
+- Data copied from source to target
+- Connections switch to target cluster 
+
+CloudWatch Metrics
+- CPU utilization
+- Health Status
+- Throughput 
+- Read, write IOPS
+- Read, write latency
+
+Viewing Query & Performance Metrics
+- identify relationship between cluster and DB performance 
 
 
 # Route53

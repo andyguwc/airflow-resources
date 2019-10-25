@@ -421,5 +421,275 @@ COPY --from=builder /app/build /usr/share/nginx/html
 $ docker run -p 8080:80 3f70388d6dfc
 
 
-# Continuous Integration and AWS
+# Continuous Integration and AWS Deployment 
+
+## Single Container Process 
+Steps:
+- push code to github
+- travis automatically pulls repo 
+- travis builds an image, tests code
+- travis pushes code to AWS EB 
+- EB builds image, deploys it 
+
+
+## Travis CI 
+Push code to Github -> Github let Travis know -> Travis download the code and do some work (e.g., run tests, deploy, etc.)
+
+Travis YML Config 
+- in the .travis.yml file 
+- steps 
+    - tell travis we need a copy of docker running
+    - build image using Dockerfile.dev
+    - run test suite (inside the container)
+    - deploy code to AWS
+
+
+<!-- .travis.yml
+sudo: required 
+services:
+  - docker 
+
+before_install:
+  - docker build -t andyguwc/docker-react -f Dockerfile.dev . 
+
+script:
+  - docker run -e CI=true andyguwc/docker-react npm run test 
+
+-->
+
+- config to auto deploy to AWS 
+    - add deploye settings
+    - travis will zip up code files and put them in a S3 bucket
+    - then travis will tell elastic beanstalk to deploy the new application
+    - generate a new user to be used by travis CI with programmatic access by travis ci 
+        - store the secret keys in travis ci environment variables 
+    
+<!-- 
+.travis.yml
+deploy: 
+  provider: elasticbeanstalk 
+  region: "us-west-2"
+  app: "docker"
+  env: "Docker-env"
+  bucket_name: "xxx.us-west-2.xxx"
+  bucket_path: "docker"
+  on:
+    branch: master
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key:
+    secure: "$AWS_SECRET_KEY" 
+-->
+
+
+## Elastic Beanstalk 
+Easy to run containers 
+- create an application
+- create environment - set base configuration and select Docker as preconfigured platform 
+    - elastic beanstalk will do load balancing 
+
+
+## Build Multi Container Application 
+
+- Create App
+    - /worker set up redis worker (su`bscriber) to listen on new index values (messages) and calculate fib numbers to write back to redis
+    - /server to set up the main application (express.js) 
+        - redis connection (as publisher)
+        - postgres connection 
+        - set up routes (get all values or current values, and for submitting values to start the publisher)
+    - /client set up react app 
+        - set up components
+        - set up form tags
+        - handle submit 
+        - routing in the react app
+    
+- Add Docker Devs
+    - Make dev Dockerfiles for each of React App, Express Server, Worker
+    - workflow
+        - copy over package.json 
+        - run npm install 
+        - copy over everything else
+        - docker compose should set up a volume to share files so we don't need to rebuild image every time 
+    - build Dockerfile.dev for /client, /server, /worker 
+
+- Docker Compose 
+    - postgres:  
+    - redis:  
+    - server:
+        - build
+        - volumes - to make sure container source code updates 
+        - env variables - specifying env variables (in keys.js) for the server 
+
+- Specifying Env Variables in Docker Compose 
+    - variableName=value (set a variable in the container at runtime)
+        - the image doesn't know, 
+    - variableName
+        - ithe value is taken from the computer
+    - anytime specifying name inside docker compose service, just refer to the service name instead of the full url as host 
+
+- Add nginx image 
+    - routing (static content to React server but API request to Express server)
+    - if /api in the route, then redirect to the express server otherwise to react server 
+    - set default.conf to allow nginx to default traffic 
+
+- Deploy Steps:
+    - Push code to github
+    - Travis automatically pulls repo
+    - Travis builds a test image, tests code
+    - Travis builds prod images
+    - Travis pushes built prod images to Docker Hub
+    - Travis pushes project to AWS EB 
+    - EB pulls image from Docker Hub, deploys 
+
+- Build Production Dockerfiles 
+    - for server and worker change CMD ["npm","run","start"]
+    - for react make sure Nginx w/prod react files are on port 3000
+
+- Build travis.yaml
+    - before_install has the build context for running the tests
+    - script 
+    - after_success
+        - docker build xxx
+        - log in to the docker CLI (env variables put in travis tool) 
+        - take those images and push them to docker hub 
+    
+- Multi Container Deployments on AWS 
+    - Dockerrun.aws.json
+        - docker-compose.yml -> Dockerrun.aws.json 
+        - Dockerrun.aws.json will just pull the image 
+        - elastic beanstalk delegates the docker hosting to elastic container (via passing task definitions)
+        - https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html
+    - Elastic Beanstalk environment
+    - Create Redis with Elastic Cache
+    - Create Postgres with RDS 
+    - Use VPC and Security Groups to make sure services are linked
+        - VPC is based on region, it's like a box protecting all the services
+        - Security group is like Firewall Rules, which allows rules for incoming traffic and outgoing traffic 
+            - Allow any incoming traffic on Port 80 from any IP
+            - Allow any traffic from any other AWS service that has this security group 
+    - Setting Environment Variables 
+        - using the console on Elastic Beanstalk to set environment properties 
+    - IAM Keys for Deployment 
+        - Full Access to lots of the services 
+        - Put the keys in the travis-ci variables 
+    - Check request logs to verify deployment 
+
+
+RDS Database Creation
+- Go to AWS Management Console and use Find Services to search for RDS
+- Click Create database button
+- Select PostgreSQL
+- Check 'only enable options eligible for RDS Free Usage Tier'
+- Set DB Instance identifier to multi-docker-postgres
+- Set Master Username to postgres
+- Set Master Password to postgres and confirm
+- Make sure VPC is set to Default VPC
+- Set Database Name to fibvalues
+- Create Database
+
+ElastiCache Redis Creation
+- Go to AWS Management Console and use Find Services to search for ElastiCache
+- Click Redis in sidebar
+- Make sure Redis is set as Cluster Engine
+- In Redis Settings form, set Name to multi-docker-redis
+- Change Node type to 'cache.t2.micro'
+- Change Number of replicas to 0
+- Scroll down to Advanced Redis Settings
+- Subnet Group should say “Create New" and Set Name to redis-group
+- VPC should be set to default VPC
+- Tick all subnet’s boxes
+- Create ElastiCache
+
+Creating a Custom Security Group
+- Go to AWS Management Console and use Find Services to search for VPC
+- Create Security Group button and set Security group name to multi-docker
+- Set Description to multi-docker
+- Set VPC to default VPC
+- Create a Security Group 
+- Manually tick the empty field in the Name column of the new security group and type multi-docker, then click the checkmark icon.
+- Edit Inbound Rules
+- Set Port Range to 5432-6379
+- Click in box next to Custom and start typing 'sg' into the box. Select the Security Group you just created, it should look similar to 'sg-…. | multi-docker’
+
+Applying Security Groups to ElastiCache
+- Go to AWS Management Console and use Find Services to search for ElastiCache
+- Check box next to Redis cluster and click Modify
+- Change VPC Security group to the multi-docker group and click Save
+
+Applying Security Groups to RDS
+- Go to AWS Management Console and use Find Services to search for RDS
+- Check box next to your instance
+- Click Modify DB instance button
+
+Applying Security Groups to Elastic Beanstalk
+- Go to AWS Management Console and use Find Services to search for Elastic Beanstalk
+- Click the multi-docker application tile
+- Click Configuration link in Sidebar
+- Scroll down to EC2 Security Groups and tick box next to multi-docker
+
+Setting Environment Variables
+- Go to AWS Management Console and use Find Services to search for Elastic Beanstalk
+- Click the multi-docker application tile
+- Modify configuration 
+- Scroll down to Environment properties
+    - In another tab Open up ElastiCache, click Redis and check the box next to your cluster. Find the Primary Endpoint and copy that value but omit the :6379
+    - Set REDIS_HOST key to the primary endpoint listed above, remember to omit :6379
+    - Set REDIS_PORT to 6379
+    - Set PGUSER to postgres
+    - Set PGPASSWORD to postgrespassword
+    - Set the PGHOST key to the RDS postgres endpoint value listed above.
+    - Set PGDATABASE to fibvalues
+    - Set PGPORT to 5432
+
+IAM Keys for Deployment
+- Find Services to search for IAM
+- Set User name to multi-docker-deployer
+- Set Access-type to Programmatic Access
+- Select Attach existing polices directly button
+- Search for 'beanstalk' and check all boxes
+- Click Create User - Copy Access key ID and secret access key for use later
+
+AWS Keys in Travis
+- Open up Travis dashboard and find your multi-docker app
+- Scroll to Environment Variables
+    - Add AWS_ACCESS_KEY and set to your AWS access key
+    - Add AWS_SECRET_KEY and set to your AWS secret key
+    
+# Kubernetes 
+
+## Why Kubernetes 
+
+- Scaling Application
+    - Worker Container is the limiting factor 
+    - Node is a virtual machine / physical computer 
+- Kubernetes
+    - Has a Master which controls what each Node does 
+    - Master relays the commands to each of the Nodes 
+- Summary 
+    - What is Kubernetes: system for running many different containers over multiple different machines 
+    - Why use Kubernetes: when you need to run many different containers with different images
+
+## Local Kube Development 
+
+- Install Kubectl (CLI for interacting with our master)
+- Install a VM driver virtualbox (to make a VM that will be your single node)
+- Install minikube (run a single node on that VM)
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
