@@ -13,20 +13,7 @@ AWS Benefits
     - AWS regions which include availability zones (collection of data centers with redundant failover)
 - can add and build new services 
 
-Alternatives
-- Azure: windows virtual machines, .NET applications
-    - not the AWS global reach 
-    - lacks services 
-- Heroku 
-    - easy app deployment 
 
-
-EC2 for computing
-S3 for storage 
-RDS for databases
-Route53 for URLs
-
-## AWS Development 
 Local Development & AWS Development 
 - Similar 
     - application runs on OS/platform
@@ -43,16 +30,29 @@ Local Development & AWS Development
     - some services access via amazong resource ID
     - connections may just be HTTP requests
  
+
 ## AWS Tooling 
-Web Console 
+- Web Console 
 
-SDK 
-Support application code to interact with the services 
-Making it easier and more robust 
+- SDK 
+    - Support application code to interact with the services 
+    - Making it easier and more robust 
 
-CLI
-Write shell scripts or batch files 
-Made for operations engineers more than developers 
+- CLI
+    - Write shell scripts or batch files 
+    - Made for operations engineers more than developers 
+
+Blueprints
+    - Infrastructure as code
+
+
+## AWS Setup
+Create key value pair for User 
+
+EC2 create key value pair
+- Used for SSH into the EC2 instance 
+- Make sure change the access rights of the mykey.pem
+$ chmod 400 mykey.pem 
 
 
 
@@ -187,9 +187,6 @@ Accessing S3 with EC2
         - IAM role with the ec2-role
         - enter starting script 
         - assign public IP to every instance
-
-
-
 
 
 # RDS
@@ -724,18 +721,6 @@ Root account
 
 Best practices
 - MFA: authentication that requires more than one factor to authenticate 
-
-
-User Login
-https://485216659578.signin.aws.amazon.com/console
-
-
-
-# Example AWS Application
-First install Node and AWS CLI
-
-AWS account and Access key to initialize, making sure things are configured by running:
-$ aws ec2 describe-instances
 
 
 
