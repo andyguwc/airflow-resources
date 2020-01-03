@@ -24,6 +24,15 @@
 - Command
 $ ssh -i $PathToKey/mykey.pem xx@xxxx.compute-1.amazonaws.com 
 
+Add the key to SSH agent
+ssh-add $PathToKey/mykey.pem
+ssh ec2-user@xxxx
+
+Enable AgentForwarding with -A 
+
+ssh -A ec2-user@$BastionHostPublicName
+Let you authenticate via the same key you used to log in to the bastion host for further SSH logins initiated from the host
+
 - Installing and Running Software
 Ubuntu 
 $ sudo apt-get update 
@@ -53,6 +62,10 @@ $ free -m
 
 - See network interfaces attached to the virtual machine
 $ ifconfig
+
+- Check security updates 
+
+$ yum --security check-update 
 
 
 # Monitoring and Managing
@@ -113,3 +126,8 @@ Allocate a fixed public IP address via Elastic IP
 - from new Elastic IP choose associate address
     - resource type choose network interface 
 
+
+
+## Provision a Working Web Server
+Using user data to run a script on startup 
+- executed at the end of the boot process 
