@@ -88,7 +88,12 @@ $ yum --security check-update
 
 
 # Allocate Public IP Address
-- If need to host an pplication under a fixed IP address, use Elastic IPs
+
+By default, all EC2 have private IP addresses. Allow instances to communicate with each other within the same VPC
+Public IP address is required to be able to communicate with the internet
+The default VPC and subnets are configured so taht any new instances taht is provisioned has a public IP address 
+
+- If need to host an application under a fixed IP address, use Elastic IPs
 
 - Choose Elastic IPs from EC2 service 
 - Allocate new address 

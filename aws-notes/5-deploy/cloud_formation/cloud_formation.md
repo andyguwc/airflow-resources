@@ -26,6 +26,7 @@ An output returns something from your template, such as the public name of an EC
 Example Templates
 https://github.com/awslabs/aws-cloudformation-templates
 
+
 ## Parameter
 Parameters:
     Demo:
@@ -90,7 +91,9 @@ Outputs:
         Value: !GetAtt 'Server.PublicDnsName' (get the attribute PublicDnsName of the EC2 instance)
         Description: 'Public name of the EC2 instance'
 
-
+Query the outputs 
+$ aws cloudformation describe-stacks --stack-name sample \
+--query "Stacks[0].Outputs[0].OutputValue"
 
 ## UserData
 Putting user data in the Instance makes sure the code is executed upon start 

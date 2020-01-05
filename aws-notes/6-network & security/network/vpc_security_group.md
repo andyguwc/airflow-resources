@@ -1,10 +1,12 @@
 
 # VPC
 
+Virtual Private Cloud - which you place AWS resources and have full control over who have access
+
 ## Concepts
 https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html
 
-Amazon VPC is the networking layer for Amazon EC2. If you're new to Amazon EC2, see What is Amazon EC2? in the Amazon EC2 User Guide for Linux Instances to get a brief overview.
+Amazon VPC is the networking layer for Amazon EC2. 
 
 The following are the key concepts for VPCs:
 
@@ -20,7 +22,6 @@ A VPC endpoint enables you to privately connect your VPC to supported AWS servic
 
 
 # Security Group 
-
 A security group acts as a virtual firewall to control the traffic for its associated instances. To use a security group, you add the inbound rules to control incoming traffic to the instance, and outbound rules to control the outgoing traffic from your instance. To associate a security group with an instance, you specify the security group when you launch the instance. If you add and remove rules from the security group, we apply those changes to the instances associated with the security group automatically.
 
 Your VPC comes with a default security group. Any instance not associated with another security group during launch is associated with the default security group.
@@ -53,17 +54,25 @@ Security Group consists of rules based on the following
 - Source/destination based on IP address, address range, or security group
 
 
-## Security Group vs. ACL 
+## Network Access Control List (NACL)
+https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html
 
-Security groups: Security groups act as a firewall for associated Amazon EC2 instances, controlling both inbound and outbound traffic at the instance level. When you launch an instance, you can associate it with one or more security groups that you've created.
+Security Group vs. NACL
+- Security groups: Security groups act as a firewall for associated Amazon EC2 instances, controlling both inbound and outbound traffic at the instance level. When you launch an instance, you can associate it with one or more security groups that you've created.
+- Network access control lists (ACLs): Network ACLs act as a firewall for associated subnets, controlling both inbound and outbound traffic at the subnet level. It is an optional layer of security
 
-Network access control lists (ACLs): Network ACLs act as a firewall for associated subnets, controlling both inbound and outbound traffic at the subnet level. 
+So basically any inbound/outbound traffic between a subnet and a route table has to pass through NACL. Default NACL traffic allows everything. 
+
+Priority
+- First rule evaluated that applies to the traffic type gets immediately applied and executed regardless of the rules that come after (i.e. with higher Rule #)
+- If don't specifically allow a traffic it will be denied by default 
+
+NACLs need to be associated with Subnets. Once within a subnet, AWS resources can add additional layers of security 
 
 
 ## Associate Security Groups with EC2 Instances
 Example of allowing SSH traffic
 https://github.com/AWSinAction/code2/blob/master/chapter06/firewall3.yaml
-
 
 ```
 Resources:
@@ -144,18 +153,19 @@ SecurityGroupInstance:
 ```
 
 
-
 # Subnets
+Simple definition: a sub-section of a network. Generally a subnet includes all computers in a specific location. Analogy: your home network can be considered as a subnet of your ISP's network
+
+A VPC is bound to a region spanning multiple availability zones in that region
+A subnet within a VPC is linked to an availability zone
+A virtual machine is launched into a single subnet 
 
 ## Public & Private Subnets
 Subnets allow you to separate concerns. Create a separate subnet for your databases,
 web servers, proxy servers, or application servers, or whenever you can separate
 two systems. 
 
-Another rule of thumb is that you should have at least two subnets: public
-and private. A public subnet has a route to the internet; a private subnet doesn’t. Your
-load balancer or web servers should be in the public subnet, and your database should
-reside in the private subnet.
+You should have at least two subnets: public and private. A public subnet has a route to the internet; a private subnet doesn’t. Your load balancer or web servers should be in the public subnet and your database should reside in the private subnet.
 
 Example Implementation 
 You’ll also create a private subnet for your web servers and one public subnet for your
@@ -169,7 +179,6 @@ two public subnets and one private subnet in the VPC:
 - 10.0.1.0/24 public SSH bastion host subnet
 - 10.0.2.0/24 public Varnish proxy subnet
 - 10.0.3.0/24 private Apache web server subnet
-
 
 
 # Networking Components
@@ -192,6 +201,8 @@ https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html
 
 Contains a set of rules, called routes, that are used to determine where network traffic from your subnet or gateway is directed
 
+VPC has a default route table. Can have multiple route tables in a VPC. Cannot delete a route table if it has dependencies (associated subnets)
+
 Route Table Concepts
 The following are the key concepts for route tables.
 - Main route table—The route table that automatically comes with your VPC. It controls the routing for all subnets that are not explicitly associated with any other route table.
@@ -213,10 +224,14 @@ The destination for the route is 0.0.0.0/0, which represents all IPv4 addresses.
 
 CIDR blocks for IPv4 and IPv6 are treated separately. For example, a route with a destination CIDR of 0.0.0.0/0 does not automatically include all IPv6 addresses. You must create a route with a destination CIDR of ::/0 for all IPv6 addresses.
 
+
 ## Internet Gateways
 https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html
 
-An internet gateway is a horizontally scaled, redundant, and highly available VPC component that allows communication between instances in your VPC and the internet. It therefore imposes no availability risks or bandwidth constraints on your network traffic.
+Simplified Definition
+Provides you private network with a route to the internet. Analogy: like the modem.
+
+An internet gateway is a VPC component that allows communication between instances in your VPC and the internet. It therefore imposes no availability risks or bandwidth constraints on your network traffic. 
 
 An internet gateway serves two purposes: to provide a target in your VPC route tables for internet-routable traffic, and to perform network address translation (NAT) for instances that have been assigned public IPv4 addresses.
 
