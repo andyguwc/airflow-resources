@@ -245,3 +245,42 @@ To enable access to or from the internet for instances in a VPC subnet, you must
 ## NAT
 You can use a NAT device to enable instances in a private subnet to connect to the internet (for example, for software updates) or other AWS services, but prevent the internet from initiating connections with the instances. A NAT device forwards traffic from the instances in the private subnet to the internet or other AWS services, and then sends the response back to the instances. When traffic goes to the internet, the source IPv4 address is replaced with the NAT device’s address and similarly, when the response traffic goes to those instances, the NAT device translates the address back to those instances’ private IPv4 addresses.
 
+
+# Notes
+## CIDR
+10.xxx is not a public address 
+10.1.0.0/16 (means using the first two bytes)
+10.1.0.0/24 (means using the first three bytes as range)
+
+
+## Route Table
+Each subnet has only one route table 
+VPC should have one main table (aka default route table for new subnets created)
+
+A new route table
+- create routes
+- then associate with subnets
+
+
+## Internet Gateway
+Private subnet access to internet via IGW
+
+IGW - horizontally scaled, redundant, available
+
+One internet gateway to one VPC 
+
+
+## Internet
+- set up NAT
+  - make sure any request in/to the internet got mapped (private <-> public IP mapping)
+
+- Route Table for NAT
+  - destination set as 0.0.0.0/0 (catch all)
+  - target set as the igw 
+  - associate the route with public subnet
+
+- public IP address
+  - assign an instance with public IP when creating instance
+  - set public subnet to auto-assign public IP
+
+- add elastic IP

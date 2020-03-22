@@ -18,10 +18,8 @@
     - with namespacing, isolate resources / subgroups of hardware 
     - control groups limit amount of resources used per process 
 
-
 - Why Docker
     - Easy to install and run software without worrying about dependencies 
-
 
 
 # Docker CLI & Server
@@ -30,8 +28,9 @@
     - used for issuing commands
     - sometimes need to run $ eval "$(docker-machine env default)"
 
-## Docker Server (Daemon)
+## Docker Server / Engine (Daemon)
     - tool for creating images and running containers, etc.
+    - docker CLI interfaces with Docker servers 
 
 - Process
     1. The Docker client contacted the Docker daemon.
@@ -72,6 +71,10 @@ typically use the stop command
 $ docker stop (send a sigterm message to the process to shut down with time to clean up)
 $ docker kill (send a sigkill signal to shut down immediately )
 
+Executing commands. The below runs "node server.js" in the nodeappname container
+$ docker exec nodeappname node server.js 
+
+
 ## Execute Multiple Commands
 for example execute redis-server and redis-cli inside one container 
 exec allows running another command 
@@ -102,6 +105,17 @@ Dockerfile
 - run some commands to install additional programs
 - specify a command to run on container startup 
 
+Key Components
+- FROM 
+- MAINTAINER
+- RUN 
+- COPY 
+- WORKDIR 
+- ENTRYPOINT the initial entrypoint that kicks off the app
+- EXPOSE ports
+- ENV for environment variables
+- VOLUME
+
 
 <!-- # Use an existing docker image
 # Use alpine as base image OS (which already has the apk)
@@ -115,12 +129,51 @@ RUN apk add --update redis
 CMD ["redis-server"] -->
 
 
+## Volumes
+Special type of directory in a container 
+Can be shared and reused among containers 
+Updates to an image won't affect a data volume 
+Data volumes are persisted even after container is deleted
+Write to the mounted folder in the Docker Host which will stick around even if containers are deleted
+
+Create a Volume
+-v creates a volume, container volume alia will write to the host machine 
+$ docker run -p 8080:3000 -v /var/www nodeimage
+If want to cusomize the host location then do where $pwd is the host location you want
+$ docker run -p 8080:3000 -v $(pwd):/var/www nodeimage
+
+Run from working directory using -w
+$ docker run -p 8080:3000 -v $(pwd):/var/www -w "var/www" nodeimage npm start 
+
+Locate a Volume
+$ docker inspect mycontainer 
+
+Removing a Volume
+$ docker rm -v lastContainer
+
+
+## Network 
+
+Bridge Network is an isolated network 
+Any container in that network can communicate with other containers in that network 
+
+Create a custom container network
+$ docker network create --driver bridge network_name
+
+Run containers in the network 
+docker run -d --net=network_name --name mongodbname mongoimage
+
+See existing networks
+$ docker network ls 
+$ docker network inspect network_name 
+
+
+
 ## Docker Build Process
 . indicates we want ot build out of the current directory
 $ docker build . 
 
 Every step along the way, we took the image generated from previous step, make a container, execute the command, and save the file system as output snapshot, then shut down the temporary container 
-
 
 <!-- Download from base -->
 Step 1/3 : FROM alpine
@@ -159,8 +212,12 @@ Cache
 
 
 ## Tagging an Image 
+-t stands for tag here the build context . is local directory
 - $ docker build -t username/redis:latest .
 - convention is dockerID/projectname:version directory
+
+customize the file
+- $ docker build -f Dockerfile 
 
 ## Docker Commit 
 - input a container, and using commit, we get image as an output
@@ -243,7 +300,6 @@ Container do not have any communications, to set networking we can use Docker Co
 ## Docker Compose File 
 write out the build and run commands in the docker-compose.yml
 
-Pseudo Code
 Here are the container I want created:
 - redis server
     - make it using the redis image
@@ -252,7 +308,7 @@ Here are the container I want created:
     - map port 8081 to 8081
 
 
-<!-- 
+```
 docker-compose.yml
 
 version: '3'
@@ -263,9 +319,8 @@ services:
     build: .
     ports: 
       - "8081:8081" 
--->
+```
 
-## Networking
 Two containers in the same docker-compose file are automcatically linked
 
 <!-- below the redis-server is also the service name -->
@@ -273,43 +328,88 @@ const client = redis.createClient({
   host: 'redis-server'
 });
 
+
+## Networking
+Specifying the networks name 
+
+```
+docker-compose.yaml 
+
+version: '2'
+services:
+  node: 
+    build:
+      context: .
+      dockerfile: node.dockerfile
+    ports:
+      - "3000:3000"
+    networks:
+      - nodeapp-network
+  
+  mongodb:
+    image: mongo 
+    networks: 
+      - nodeapp-network 
+
+networks:
+  nodeapp-network:
+    driver: bridge 
+```
+
+
 ## Docker Compose Commands
 
-Launch containers 
-- $ docker run myimage
+Build 
+- $ docker-compose build 
+- $ docker-compose build mongo 
+
+Launch containers (better than Docker run)
 - $ docker-compose up 
 
-Launch in background
+Launch in background (daemon mode)
 - $ docker-compose up -d
 
-Rebuild
-in docker we use 
-- $ docker build .
-- $ docker run myimage
-while for docker-compose 
+Do not recreate services that the nodeservice depends on
+- $ docker-compose up --no-deps nodeservice 
+
+Rebuild 
 - $ docker-compose up --build 
 
-Stop docker compose containers 
+Stop docker compose containers (down is stop and remove)
 - $ docker-compose down
+
+Remove all images and volumes 
+- $ docker-compose down --rmi all --volumes
 
 Container maintenance
 - if status code 1,2,3 that's error, otherwise 0 
 - automatic container restarts
 
- <!-- node-app:
-    restart: always
-    build: .
-    ports: 
-      - "8081:8081" -->
-
-- restart policies
-    - "no"
-    - "always"
-    - "on-failure"
-    - "unless-stopped"
-
-need to run from appropriate directory 
+Monitor
 $ docker-compose ps 
+$ docker-compose logs 
+
+## Docker Compose Resources for Python 
+
+https://blog.codeship.com/using-docker-compose-for-python-development/
+
+Example simple Dockerfile and docker-compose.yaml 
+https://github.com/jamesmawm/High-Frequency-Trading-Model-with-IB
+
+Linux Alpine for Python Pandas
+https://github.com/docker-library/python/issues/381
+
+Docker and Docker Compose env variables 
+https://docs.docker.com/compose/environment-variables/
+
+Good Docker Curriculum 
+https://docker-curriculum.com/
+
+
+Docler Logs
+docker logs -f <CONTAINER>
+https://docs.docker.com/config/containers/logging/
+
 
 
 # Development  
@@ -457,7 +557,7 @@ script:
 
 -->
 
-- config to auto deploy to AWS 
+- config to auto deploy to AWS using elastic beanstalk
     - add deploye settings
     - travis will zip up code files and put them in a S3 bucket
     - then travis will tell elastic beanstalk to deploy the new application
@@ -673,7 +773,6 @@ AWS Keys in Travis
 - Install Kubectl (CLI for interacting with our master)
 - Install a VM driver virtualbox (to make a VM that will be your single node)
 - Install minikube (run a single node on that VM)
-
 
 
 

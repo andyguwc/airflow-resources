@@ -1,5 +1,17 @@
 # CloudWatch
 
+## CloudWatch Basics 
+
+Logs
+- segrecated into trace, debug, info, etc.
+
+Metrics
+- quantitative measurements of the system (e.g. errors, calls, etc.)
+- log levels: output error level logs to centralized log store, and warn/info to local hard disk
+- best practices
+  - isolate and contain metrics submitted by one applicational product 
+  - multiple dimensions (e.g. status code)
+
 
 ## CloudWatch Triggering Recovery 
 - EC2 detects outage and reports to CloudWatch
@@ -33,3 +45,19 @@ RecoveryAlarm:
         - Name: InstanceId
           Value: !Ref VM 
 ```
+
+
+## Configure CloudWatch
+
+Resources
+- Log Group
+  - Configure Log Data Retention Period 
+- Log Stream 
+
+Customized Metrics 
+- put metrics data to S3 
+- using the async cloudwatch client (don't hold out production in case cloudwatch doesn't respond)
+
+Dashboards & Alarms 
+- SMS allows cloudwatch to send alarms 
+

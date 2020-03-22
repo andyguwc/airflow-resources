@@ -4,6 +4,7 @@
 - Declarative approach 
     - tells CloudFormation how your infrastructure should look 
     - not telling what actions are needed to create that infrastructure and no specification on sequences
+    - automatically understands the dependencies
 
 - Benefits
     - Consistent description of infrastructure on AWS
@@ -19,6 +20,8 @@ Parameters—Parameters are used to customize a template with values: for exampl
 domain name, customer ID, and database password.
 
 Resources—A resource is the smallest block you can describe. Examples are a virtual machine, a load balancer, or an Elastic IP address.
+- Resources' dependencies are prioritized 
+- Represented as a DAG
 
 Outputs—An output is comparable to a parameter, but the other way around.
 An output returns something from your template, such as the public name of an EC2 instance.
@@ -28,6 +31,10 @@ https://github.com/awslabs/aws-cloudformation-templates
 
 
 ## Parameter
+Variables for user supplied input 
+Input validationa across data types with allowed value 
+Default parameter values 
+
 Parameters:
     Demo:
         Type: Number 
@@ -68,6 +75,7 @@ Resources:
                 SubnetId: 'subnet-123'
 
 
+
 ## Functions
 !Ref NameOfSomething (a placeholder for what is referenced by the name)
 
@@ -81,7 +89,17 @@ With !Sub, all references within ${} are substituted with their real value. The 
 The function !Base64 encodes the input with Base64. You’ll need this function because the user data must be encoded in Base64:
 !Base64 'value' # becomes 'dmFsdWU='
 
+
+## Mappings 
+Named object with key value pairs 
+Useful for environment specific properties 
+Mapping is very verbose 
+
+
 ## Outputs
+Exports meta data about cloudformation stack resources 
+- Able to reference any resource property
+- Referenceable across stacks in the same region 
 
 Outputs:
     ID:
@@ -95,7 +113,8 @@ Query the outputs
 $ aws cloudformation describe-stacks --stack-name sample \
 --query "Stacks[0].Outputs[0].OutputValue"
 
-## UserData
+
+## UserData / Bootstrapping 
 Putting user data in the Instance makes sure the code is executed upon start 
 
 UserData:
@@ -127,6 +146,42 @@ for PUBLICIPADDRESS in $PUBLICIPADDRESSESS; do
   ssh -t "ec2-user@$PUBLICIPADDRESS" "sudo yum -y --security update"
 done 
 ``` 
+
+## WaitCondition 
+
+
+## Depends On
+Control order of resources
+
+
+## Nested Templates
+Breaking things into components
+
+VPC templates
+- input parameters
+- output VPCId and SubnetId
+- send to Database Template
+
+Database Template
+- Takes the outputs from VPC templates as inputs
+- Outputs VPCId, SubnetId, DBName, DBUser, DBPassword 
+
+Use get attribute to refer to the outputs
+"SubnetId": {
+    "Fn::GetAtt": {
+        "VPCStack",
+        "Outputs.SubnetId"
+    }
+}
+
+
+## Best Practices
+- don't embed credentials 
+- validate templates
+- use constraints & aws specific parameter types
+- use nested stacks to reduce code duplication
+
+
 
 
 

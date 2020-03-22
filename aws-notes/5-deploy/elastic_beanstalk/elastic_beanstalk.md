@@ -1,6 +1,10 @@
 
 # Elastic Beanstalk Basics
 
+Platform as a service 
+
+Wrapper around all the resources needed to deploy web applications
+
 Deploy a common web application. The OS and runtime are managed by AWS 
 
 AWS Elastic Beanstalk lets you handle the following recurring problems:
@@ -37,6 +41,7 @@ $ aws elasticbeanstalk terminate-environment --environment-name etherpad
 wait until status changed to terminated do the delete
 $ aws elasticbeanstalk delete-application --aplication-name etherpad 
 
+Rolling deployments 
 
 # Monitor & LOgs
 Click Logs from the submeanu 
